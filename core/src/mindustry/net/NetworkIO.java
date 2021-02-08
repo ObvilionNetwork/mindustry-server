@@ -95,7 +95,7 @@ public class NetworkIO{
         buffer.put((byte)state.rules.mode().ordinal());
         buffer.putInt(netServer.admins.getPlayerLimit());
 
-        writeString(buffer, description, 100);
+        writeString(buffer, description, 150);
         if(state.rules.modeName != null){
             writeString(buffer, state.rules.modeName, 50);
         }

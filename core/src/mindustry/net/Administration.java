@@ -569,6 +569,10 @@ public class Administration{
 
         public PlayerInfo(){
         }
+
+        public boolean online(){
+            return Groups.player.find(player -> player.uuid().equals(id)) != null;
+        }
     }
 
     /** Handles chat messages from players and changes their contents. */

@@ -642,6 +642,9 @@ public class HudFragment extends Fragment{
             }
 
             void drawInner(Color color, float fract){
+                if(fract < 0) return;
+
+                fract = Mathf.clamp(fract);
                 if(flip){
                     x += width;
                     width = -width;

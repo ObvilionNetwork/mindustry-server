@@ -230,61 +230,6 @@ configure(subprojects - project(":annotations")){
     }
 }
 
-project(":desktop"){
-    apply plugin: "java"
-
-    compileJava.options.fork = true
-
-    dependencies{
-        implementation project(":core")
-        implementation arcModule("natives:natives-desktop")
-        implementation arcModule("natives:natives-freetype-desktop")
-        implementation 'com.github.MinnDevelopment:java-discord-rpc:v2.0.1'
-
-        if(debugged()) implementation project(":debug")
-
-        implementation "com.github.Anuken:steamworks4j:$steamworksVersion"
-
-        implementation arcModule("backends:backend-sdl")
-    }
-}
-
-project(":ios"){
-    apply plugin: "java"
-    apply plugin: "robovm"
-
-    task incrementConfig{
-        def vfile = file('robovm.properties')
-        def bversion = getBuildVersion()
-        def props = new Properties()
-        if(vfile.exists()){
-            props.load(new FileInputStream(vfile))
-        }else{
-            props['app.id'] = 'io.anuke.mindustry'
-            props['app.version'] = '6.0'
-            props['app.mainclass'] = 'mindustry.IOSLauncher'
-            props['app.executable'] = 'IOSLauncher'
-            props['app.name'] = 'Mindustry'
-        }
-        
-        props['app.build'] = (!props.containsKey("app.build") ? 40 : props['app.build'].toInteger() + 1) + ""
-        if(bversion != "custom build"){
-            props['app.version'] = versionNumber + "." + bversion + (bversion.contains(".") ? "" : ".0")
-        }
-        props.store(vfile.newWriter(), null)
-    }
-
-    dependencies{
-        implementation project(":core")
-
-        implementation arcModule("natives:natives-ios")
-        implementation arcModule("natives:natives-freetype-ios")
-        implementation arcModule("backends:backend-robovm")
-
-        compileOnly project(":annotations")
-    }
-}
-
 project(":core"){
     apply plugin: "java-library"
 
@@ -347,10 +292,7 @@ project(":core"){
 
     afterEvaluate{
         task mergedJavadoc(type: Javadoc){
-            def blacklist = [project(":ios"), project(":desktop"), project(":server"), project(":annotations")]
-            if(findProject(":android") != null){
-                blacklist += project(":android")
-            }
+            def blacklist = [project(":server"), project(":annotations")]
 
             source rootProject.subprojects.collect{ project ->
                 if(!blacklist.contains(project) && project.hasProperty("sourceSets")){
@@ -432,12 +374,7 @@ task deployAll{
     }
 
     dependsOn cleanDeployOutput
-    dependsOn "desktop:packrLinux64"
-    dependsOn "desktop:packrWindows64"
-    dependsOn "desktop:packrWindows32"
-    dependsOn "desktop:packrMacOS"
     dependsOn "server:deploy"
-    dependsOn "android:deploy"
 }
 
 task resolveDependencies{

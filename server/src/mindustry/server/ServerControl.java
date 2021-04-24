@@ -23,6 +23,14 @@ import mindustry.net.Administration.*;
 import mindustry.net.Packets.*;
 import mindustry.net.*;
 import mindustry.type.*;
+import org.jline.reader.EndOfFileException;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
+import org.jline.reader.impl.LineReaderImpl;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp;
 
 import java.io.*;
 import java.net.*;
@@ -44,6 +52,7 @@ public class ServerControl implements ApplicationListener{
 
     public final CommandHandler handler = new CommandHandler("");
     public final Fi logFolder = Core.settings.getDataDirectory().child("logs/");
+    public Seq<String> commandsHistory = new Seq<>();
 
     private Fi currentLogFile;
     private boolean inExtraRound;
@@ -56,6 +65,8 @@ public class ServerControl implements ApplicationListener{
     private ServerSocket serverSocket;
     private PrintWriter socketOutput;
     private String suggested;
+    private Terminal terminal;
+    private LineReader lineReader;
 
     public ServerControl(String[] args){
         setup(args);
@@ -72,15 +83,30 @@ public class ServerControl implements ApplicationListener{
         //update log level
         Config.debug.set(Config.debug.bool());
 
-        try{
+        try {
             lastMode = Gamemode.valueOf(Core.settings.getString("lastServerMode", "survival"));
-        }catch(Exception e){ //handle enum parse exception
+        } catch (Exception e) { //handle enum parse exception
             lastMode = Gamemode.survival;
+        }
+
+        try {
+            terminal = TerminalBuilder.builder().system(true).build();
+            lineReader = LineReaderBuilder
+                    .builder()
+                    .terminal(terminal)
+                    .build();
+        } catch (Exception e) {
+            // Ignored
         }
 
         logger = (level1, text) -> {
             String result = bold + lightBlack + "[" + dateTime.format(LocalDateTime.now()) + "] " + reset + format(tags[level1.ordinal()] + " " + text + "&fr");
-            System.out.println(result);
+
+            // TODO: текст перезаписывается
+            lineReader.callWidget(LineReader.CLEAR);
+            lineReader.getTerminal().writer().println(result);
+            lineReader.callWidget(LineReader.REDRAW_LINE);
+            lineReader.callWidget(LineReader.REDISPLAY);
 
             if(Config.logging.bool()){
                 logToFile("[" + dateTime.format(LocalDateTime.now()) + "] " + formatColors(tags[level1.ordinal()] + " " + text + "&fr", false));
@@ -927,10 +953,24 @@ public class ServerControl implements ApplicationListener{
         mods.eachClass(p -> p.registerServerCommands(handler));
     }
 
-    private void readCommands(){
+    private void readCommands() {
+        try {
+            while(true) {
+                String line = lineReader.readLine("> ");
+                Core.app.post(() -> handleCommandString(line));
+            }
+        } catch (UserInterruptException e) {
+            // Ignore
+        } catch (EndOfFileException e) {
+            // Terminal closed
+            return;
+        }
+
+        // If terminal does supported
         Scanner scan = new Scanner(System.in);
-        while(scan.hasNext()){
+        while(scan.hasNext()) {
             String line = scan.nextLine();
+            commandsHistory.add(line);
             Core.app.post(() -> handleCommandString(line));
         }
     }

@@ -1,8 +1,10 @@
 package mindustry.net;
 
+import arc.Events;
 import arc.struct.*;
 import arc.util.*;
 import mindustry.entities.units.*;
+import mindustry.game.EventType;
 import mindustry.gen.*;
 import mindustry.net.Administration.*;
 import mindustry.net.Net.*;
@@ -49,6 +51,7 @@ public abstract class NetConnection{
         }
 
         Call.kick(this, reason);
+        Events.fire(new EventType.KickEvent(reason,this.player));
 
         close();
 
@@ -70,6 +73,7 @@ public abstract class NetConnection{
         netServer.admins.handleKicked(uuid, address, kickDuration);
 
         Call.kick(this, reason);
+        Events.fire(new EventType.KickEvent(reason,this.player));
 
         close();
 

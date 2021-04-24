@@ -459,5 +459,17 @@ public class EventType{
             this.target = target;
         }
     }
+    public static class KickEvent{
+        public String textReason;
+        public Player kicked;
+        public KickEvent(Packets.KickReason reason,Player player){
+            this.kicked=player;
+            this.textReason=reason.name();
+        }
+        public KickEvent(String kickReason,Player player){
+            this.kicked = player;
+            this.textReason=kickReason;
+        }
+    }
 }
 

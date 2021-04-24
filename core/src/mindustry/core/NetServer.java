@@ -429,6 +429,7 @@ public class NetServer implements ApplicationListener{
                         }
 
                         VoteSession session = new VoteSession(currentlyKicking, found);
+                        Events.fire(new VotekickStartEvent(player,found));
                         session.vote(player, 1);
                         vtime.reset();
                         currentlyKicking[0] = session;

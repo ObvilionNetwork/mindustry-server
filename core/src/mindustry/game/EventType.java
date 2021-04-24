@@ -449,6 +449,15 @@ public class EventType{
             this.ip = ip;
         }
     }
-    
+
+    public static class VotekickStartEvent{
+        public final Player starter;
+        public final Player target;
+
+        public VotekickStartEvent(Player starter,Player target){
+            this.starter = starter;
+            this.target = target;
+        }
+    }
 }
 

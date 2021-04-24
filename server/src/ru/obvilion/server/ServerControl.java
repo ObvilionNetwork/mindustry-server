@@ -1,4 +1,4 @@
-package mindustry.server;
+package ru.obvilion.server;
 
 import arc.*;
 import arc.files.*;
@@ -27,10 +27,8 @@ import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
-import org.jline.reader.impl.LineReaderImpl;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.utils.InfoCmp;
 
 import java.io.*;
 import java.net.*;
@@ -51,7 +49,7 @@ public class ServerControl implements ApplicationListener{
         autosaveDate = DateTimeFormatter.ofPattern("MM-dd-yyyy_HH-mm-ss");
 
     public final CommandHandler handler = new CommandHandler("");
-    public final Fi logFolder = Core.settings.getDataDirectory().child("logs/");
+    public final Fi logFolder = Core.settings.getDataDirectory().sibling("logs/");
     public Seq<String> commandsHistory = new Seq<>();
 
     private Fi currentLogFile;

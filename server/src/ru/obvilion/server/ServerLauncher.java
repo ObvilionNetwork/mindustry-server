@@ -1,4 +1,4 @@
-package mindustry.server;
+package ru.obvilion.server;
 
 import arc.*;
 import arc.backend.headless.*;
@@ -17,38 +17,37 @@ import java.time.*;
 
 import static arc.util.Log.*;
 import static mindustry.Vars.*;
-import static mindustry.server.ServerControl.*;
 
 public class ServerLauncher implements ApplicationListener{
     static String[] args;
 
-    public static void main(String[] args){
-        try{
+    public static void main(String[] args) {
+        try {
             ServerLauncher.args = args;
             Vars.platform = new Platform(){};
             Vars.net = new Net(platform.getNet());
 
             logger = (level1, text) -> {
-                String result = "[" + dateTime.format(LocalDateTime.now()) + "] " + format(tags[level1.ordinal()] + " " + text + "&fr");
+                String result = "[" + ServerControl.dateTime.format(LocalDateTime.now()) + "] " + format(ServerControl.tags[level1.ordinal()] + " " + text + "&fr");
                 System.out.println(result);
             };
             new HeadlessApplication(new ServerLauncher(), throwable -> CrashSender.send(throwable, f -> {}));
-        }catch(Throwable t){
+        } catch(Throwable t) {
             CrashSender.send(t, f -> {});
         }
     }
 
     @Override
-    public void init(){
+    public void init() {
         Core.settings.setDataDirectory(Core.files.local("config"));
         loadLocales = false;
         headless = true;
 
-        Fi plugins = Core.settings.getDataDirectory().child("plugins");
-        if(plugins.isDirectory() && plugins.list().length > 0 && !plugins.sibling("mods").exists()){
+        Fi plugins = Core.settings.getDataDirectory().sibling("plugins");
+        if (plugins.isDirectory() && plugins.list().length > 0 && !plugins.sibling("mods").exists()){
             warn("[IMPORTANT NOTICE] &lrPlugins have been detected.&ly Automatically moving all contents of the plugin folder into the 'mods' folder. The original folder will not be removed; please do so manually.");
             plugins.sibling("mods").mkdirs();
-            for(Fi file : plugins.list()){
+            for (Fi file : plugins.list()){
                 file.copyTo(plugins.sibling("mods"));
             }
         }
@@ -59,12 +58,12 @@ public class ServerLauncher implements ApplicationListener{
         mods.loadScripts();
         content.createModContent();
         content.init();
-        if(mods.hasContentErrors()){
+        if (mods.hasContentErrors()) {
             err("Error occurred loading mod content:");
-            for(LoadedMod mod : mods.list()){
-                if(mod.hasContentErrors()){
+            for (LoadedMod mod : mods.list()){
+                if (mod.hasContentErrors()){
                     err("| &ly[@]", mod.name);
-                    for(Content cont : mod.erroredContent){
+                    for (Content cont : mod.erroredContent){
                         err("| | &y@: &c@", cont.minfo.sourceFile.name(), Strings.getSimpleMessage(cont.minfo.baseError).replace("\n", " "));
                     }
                 }

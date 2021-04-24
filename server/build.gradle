@@ -1,6 +1,6 @@
 sourceSets.main.java.srcDirs = ["src/"]
 
-project.ext.mainClassName = "mindustry.server.ServerLauncher"
+project.ext.mainClassName = "ru.obvilion.server.ServerLauncher"
 project.ext.assetsDir = new File("../core/assets")
 
 ext.getServerFolder = {

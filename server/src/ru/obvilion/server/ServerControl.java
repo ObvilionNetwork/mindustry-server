@@ -34,7 +34,6 @@ import java.io.*;
 import java.net.*;
 import java.time.*;
 import java.time.format.*;
-import java.util.*;
 
 import static arc.util.ColorCodes.*;
 import static arc.util.Log.*;
@@ -50,8 +49,8 @@ public class ServerControl implements ApplicationListener{
 
     public final CommandHandler handler = new CommandHandler("");
     public final Fi logFolder = Core.settings.getDataDirectory().sibling("logs/");
-    public Seq<String> commandsHistory = new Seq<>();
 
+    private boolean wantsClose = false;
     private Fi currentLogFile;
     private boolean inExtraRound;
     private Task lastTask;
@@ -100,20 +99,19 @@ public class ServerControl implements ApplicationListener{
         logger = (level1, text) -> {
             String result = bold + lightBlack + "[" + dateTime.format(LocalDateTime.now()) + "] " + reset + format(tags[level1.ordinal()] + " " + text + "&fr");
 
-            // TODO: текст перезаписывается
             lineReader.callWidget(LineReader.CLEAR);
             lineReader.getTerminal().writer().println(result);
             lineReader.callWidget(LineReader.REDRAW_LINE);
             lineReader.callWidget(LineReader.REDISPLAY);
 
-            if(Config.logging.bool()){
+            if (Config.logging.bool()){
                 logToFile("[" + dateTime.format(LocalDateTime.now()) + "] " + formatColors(tags[level1.ordinal()] + " " + text + "&fr", false));
             }
 
-            if(socketOutput != null){
+            if (socketOutput != null) {
                 try{
                     socketOutput.println(formatColors(text + "&fr", false));
-                }catch(Throwable e1){
+                } catch(Throwable e1) {
                     err("Error occurred logging to socket: @", e1.getClass().getSimpleName());
                 }
             }
@@ -956,20 +954,20 @@ public class ServerControl implements ApplicationListener{
             while(true) {
                 String line = lineReader.readLine("> ");
                 Core.app.post(() -> handleCommandString(line));
+                wantsClose = false;
             }
         } catch (UserInterruptException e) {
-            // Ignore
+            if (wantsClose) {
+                System.out.println(blue + "Ctrl + C" + white + " pressed! Stopping server...");
+                Core.app.exit();
+            } else {
+                wantsClose = true;
+                System.out.println(blue + "Ctrl + C" + white + " pressed! Click again to stop server");
+                readCommands();
+            }
         } catch (EndOfFileException e) {
-            // Terminal closed
-            return;
-        }
-
-        // If terminal does supported
-        Scanner scan = new Scanner(System.in);
-        while(scan.hasNext()) {
-            String line = scan.nextLine();
-            commandsHistory.add(line);
-            Core.app.post(() -> handleCommandString(line));
+            System.out.println(blue + "Ctrl + D" + white + " pressed! Stopping server...");
+            Core.app.exit();
         }
     }
 

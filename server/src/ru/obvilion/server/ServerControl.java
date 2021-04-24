@@ -962,7 +962,7 @@ public class ServerControl implements ApplicationListener{
                 Core.app.exit();
             } else {
                 wantsClose = true;
-                System.out.println(blue + "Ctrl + C" + white + " pressed! Click again to stop server");
+                System.out.println(blue + "Ctrl + C" + white + " pressed! Press again to stop server");
                 readCommands();
             }
         } catch (EndOfFileException e) {

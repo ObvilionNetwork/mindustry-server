@@ -3,6 +3,7 @@ package mindustry.core;
 import arc.*;
 import arc.math.*;
 import arc.util.*;
+import mindustry.Vars;
 import mindustry.annotations.Annotations.*;
 import mindustry.core.GameState.*;
 import mindustry.ctype.*;
@@ -211,36 +212,36 @@ public class Logic implements ApplicationListener{
         Events.fire(new WaveEvent());
     }
 
-    private void checkGameState(){
-        //campaign maps do not have a 'win' state!
-        if(state.isCampaign()){
+    public Runnable gameStateChecker = () -> {
+        // campaign maps do not have a 'win' state!
+        if (state.isCampaign()) {
             //gameover only when cores are dead
-            if(state.teams.playerCores().size == 0 && !state.gameOver){
+            if (state.teams.playerCores().size == 0 && !state.gameOver) {
                 state.gameOver = true;
                 Events.fire(new GameOverEvent(state.rules.waveTeam));
             }
 
             //check if there are no enemy spawns
-            if(state.rules.waves && spawner.countSpawns() + state.teams.cores(state.rules.waveTeam).size <= 0){
+            if (state.rules.waves && spawner.countSpawns() + state.teams.cores(state.rules.waveTeam).size <= 0) {
                 //if yes, waves get disabled
                 state.rules.waves = false;
             }
 
             //if there's a "win" wave and no enemies are present, win automatically
-            if(state.rules.waves && (state.enemies == 0 && state.rules.winWave > 0 && state.wave >= state.rules.winWave && !spawner.isSpawning()) ||
-                (state.rules.attackMode && state.rules.waveTeam.cores().isEmpty())){
+            if (state.rules.waves && (state.enemies == 0 && state.rules.winWave > 0 && state.wave >= state.rules.winWave && !spawner.isSpawning()) ||
+                    (state.rules.attackMode && state.rules.waveTeam.cores().isEmpty())) {
 
                 Call.sectorCapture();
             }
-        }else{
-            if(!state.rules.attackMode && state.teams.playerCores().size == 0 && !state.gameOver){
+        } else {
+            if (!state.rules.attackMode && state.teams.playerCores().size == 0 && !state.gameOver) {
                 state.gameOver = true;
                 Events.fire(new GameOverEvent(state.rules.waveTeam));
-            }else if(state.rules.attackMode){
+            } else if(state.rules.attackMode) {
                 //count # of teams alive
                 int countAlive = state.teams.getActive().count(TeamData::hasCore);
 
-                if((countAlive <= 1 || (!state.rules.pvp && state.rules.defaultTeam.core() == null)) && !state.gameOver){
+                if ((countAlive <= 1 || (!state.rules.pvp && state.rules.defaultTeam.core() == null)) && !state.gameOver) {
                     //find team that won
                     TeamData left = state.teams.getActive().find(TeamData::hasCore);
                     Events.fire(new GameOverEvent(left == null ? Team.derelict : left.team));
@@ -248,6 +249,10 @@ public class Logic implements ApplicationListener{
                 }
             }
         }
+    };
+
+    private void checkGameState(){
+        gameStateChecker.run();
     }
 
     private void updateWeather(){

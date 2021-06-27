@@ -1,11 +1,15 @@
 [
   {
-    "name": "RCR",
-    "address": ["rcr.fvds.ru"]
+    "name": "RCM",
+    "address": ["185.104.248.61", "easyplay.su"]
+  },
+  {
+    "name": "SMokeOfAnarchy.duckdns.org",
+    "address": ["smokeofanarchy.duckdns.org:6853"]
   },
   {
     "name": "mindustry.pl",
-    "address": ["mindustry.pl:6000", "mindustry.pl:6666", "mindustry.pl"]
+    "address": ["mindustry.pl:6000", "mindustry.pl:6666", "mindustry.pl", "mindustry.pl:6966"]
   },
   {
     "name": "{AA}",
@@ -17,7 +21,7 @@
   },
   {
     "name": "C.A.M.S.",
-    "address": ["routerchain.ddns.net", "nikochio.ddns.net"]
+    "address": ["routerchain.ddns.net", "nikochio.ddns.net", "play.thedimas.pp.ua"]
   },
   {
     "name": "BE6.RUN",
@@ -25,7 +29,7 @@
   },
   {
     "name": "io",
-    "address": ["mindustry.io", "mindustry.io:1000", "mindustry.io:2000", "mindustry.io:3000", "mindustry.io:4000"]
+    "address": ["mindustry.io.community", "mindustry.io.community:1000", "mindustry.io.community:2000", "mindustry.io.community:3000", "mindustry.io.community:4000"]
   },
   {
     "name": "ECAN",
@@ -33,7 +37,7 @@
   },
   {
     "name": "Chaotic Neutral",
-    "address": ["Chaotic-Neutral.ddns.net:1111", "Chaotic-Neutral.ddns.net:5555", "Chaotic-Neutral.ddns.net:6666", "Chaotic-Neutral.ddns.net:7777"]
+    "address": ["Chaotic-Neutral.ddns.net:1111", "Chaotic-Neutral.ddns.net:2222", "Chaotic-Neutral.ddns.net:5555", "Chaotic-Neutral.ddns.net:6666", "Chaotic-Neutral.ddns.net:7777"]
   },
   {
     "name": "Ranked",
@@ -60,12 +64,8 @@
     "address": ["minty-server.ddns.net"]
   },
   {
-    "name": "CxZx",
-    "address": ["frfr1.quackhost.uk:20060", "frfr1.quackhost.uk:20185", "defr2.forcehost.net:1069"]
-  },
-  {
     "name": "Korea",
-    "address": ["mindustry.kr"]
+    "address": ["mindustry.kr", "mindustry.initd.kr"]
   },
   {
     "name": "hexpvp.ml",
@@ -73,7 +73,7 @@
   },
   {
     "name": "Omega",
-    "address": ["185.86.230.102:25906", "185.86.230.104:25985", "185.86.230.101:25641", "185.86.230.104:25677"] 
+    "address": ["178.170.47.34:20204", "157.90.213.2:30308", "157.90.180.53:25738"] 
   },
   {
     "name": "md.obvilionnetwork.ru",
@@ -88,7 +88,27 @@
     "address": ["v6.mindustry.nydus.app:6566"]
   },
   {
-    "name": "Darkdustry",
-    "address": ["mindurka.ru"]
+    "name": "MD Community",
+    "address": ["mindurka.tk", "mindurka.tk:4000"]
+  },
+  {
+    "name": "Mindustry.Party",
+    "address": ["game.mindustry.party"]
+  },
+  {
+    "name": "TSR", 
+    "address": ["fifr4.quackhost.uk:20131"]
+  },
+  {
+    "name": "Sakura", 
+    "address": ["160.16.207.141", "160.16.207.141:21527", "160.16.207.141:31587"]
+  },
+  {
+    "name": "MeowLand",
+    "address": ["34.134.111.15"]
+  },
+  {
+    "name": "[accent]Mindustry [red]Reborn",
+    "address": ["mindustry.me", "mindustry.me:1000", "mindustry.me:2000", "mindustry.me:3000"]
   }
 ]

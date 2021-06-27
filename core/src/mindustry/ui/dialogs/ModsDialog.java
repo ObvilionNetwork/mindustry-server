@@ -48,15 +48,6 @@ public class ModsDialog extends BaseDialog{
         super("@mods");
         addCloseButton();
 
-        Events.on(DisposeEvent.class, e -> {
-            textureCache.each((key, val) -> {
-                if(val.texture.width == val.width){
-                    val.texture.dispose();
-                }
-            });
-            textureCache.clear();
-        });
-
         browser = new BaseDialog("@mods.browser");
 
         browser.cont.table(table -> {
@@ -136,7 +127,7 @@ public class ModsDialog extends BaseDialog{
                                 try{
                                     return d.parse(text);
                                 }catch(Exception e){
-                                    throw new RuntimeException(e);
+                                    return new Date();
                                 }
                             };
 
@@ -157,10 +148,10 @@ public class ModsDialog extends BaseDialog{
 
     void setup(){
         float h = 110f;
-        float w = mobile ? 440f : 524f;
+        float w = Math.min(Core.graphics.getWidth() / 1.1f, 520f);
 
         cont.clear();
-        cont.defaults().width(mobile ? 500 : 560f).pad(4);
+        cont.defaults().width(Math.min(Core.graphics.getWidth() / 1.2f, 556f)).pad(4);
         cont.add("@mod.reloadrequired").visible(mods::requiresReload).center().get().setAlignment(Align.center);
         cont.row();
 
@@ -183,21 +174,12 @@ public class ModsDialog extends BaseDialog{
                         dialog.hide();
 
                         platform.showMultiFileChooser(file -> {
-                            Runnable go = () -> {
-                                try{
-                                    mods.importMod(file);
-                                    setup();
-                                }catch(IOException e){
-                                    ui.showException(e);
-                                    e.printStackTrace();
-                                }
-                            };
-
-                            //show unsafe jar file warning
-                            if(file.extEquals("jar")){
-                                ui.showConfirm("@warning", "@mod.jarwarn", go);
-                            }else{
-                                go.run();
+                            try{
+                                mods.importMod(file);
+                                setup();
+                            }catch(IOException e){
+                                ui.showException(e);
+                                Log.err(e);
                             }
                         }, "zip", "jar");
                     }).margin(12f);
@@ -307,7 +289,7 @@ public class ModsDialog extends BaseDialog{
 
                             if(steam && !mod.hasSteamID()){
                                 right.row();
-                                right.button(Icon.export, Styles.clearTransi, () -> {
+                                right.button(Icon.export, Styles.clearPartiali, () -> {
                                     platform.publish(mod);
                                 }).size(50f);
                             }
@@ -342,7 +324,6 @@ public class ModsDialog extends BaseDialog{
             if(showImport) dialog.buttons.button("@mods.browser.reinstall", Icon.download, () -> githubImportMod(mod.getRepo(), mod.isJava()));
         }
 
-        //TODO improve this menu later
         dialog.cont.pane(desc -> {
             desc.center();
             desc.defaults().padTop(10).left();
@@ -374,7 +355,7 @@ public class ModsDialog extends BaseDialog{
                 d.cont.pane(cs -> {
                     int i = 0;
                     for(UnlockableContent c : all){
-                        cs.button(new TextureRegionDrawable(c.icon(Cicon.medium)), Styles.cleari, Cicon.medium.size, () -> {
+                        cs.button(new TextureRegionDrawable(c.uiIcon), Styles.cleari, iconMed, () -> {
                             ui.content.show(c);
                         }).size(50f).with(im -> {
                             var click = im.getClickListener();
@@ -538,10 +519,7 @@ public class ModsDialog extends BaseDialog{
 
     private void githubImportMod(String repo, boolean isJava){
         if(isJava){
-            ui.showConfirm("@warning", "@mod.jarwarn", () -> {
-                ui.loadfrag.show();
-                githubImportJavaMod(repo);
-            });
+            githubImportJavaMod(repo);
         }else{
             ui.loadfrag.show();
             Core.net.httpGet(ghApi + "/repos/" + repo, res -> {

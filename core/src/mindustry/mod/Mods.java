@@ -347,18 +347,31 @@ public class Mods implements Loadable{
 
     /** Loads all mods from the folder, but does not call any methods on them.*/
     public void load(){
-        for(Fi file : modDirectory.list()){
-            if(!file.extension().equals("jar") && !file.extension().equals("zip") && !(file.isDirectory() && (file.child("mod.json").exists() || file.child("mod.hjson").exists()))) continue;
+        for (Fi file : modDirectory.list()){
+            if (!file.extension().equals("jar") && !file.extension().equals("zip") && !(file.isDirectory() && (file.child("mod.json").exists() || file.child("mod.hjson").exists()))) continue;
 
             Log.debug("[Mods] Loading mod @", file);
-            try{
+            try {
                 LoadedMod mod = loadMod(file);
                 mods.add(mod);
-            }catch(Throwable e){
-                if(e instanceof ClassNotFoundException && e.getMessage().contains("mindustry.plugin.Plugin")){
+            } catch(Throwable e) {
+                Log.err("Failed to load mod file @. Skipping.", file);
+                Log.err(e);
+            }
+        }
+
+        for (Fi file : pluginsDirectory.list()){
+            if (!file.extension().equals("jar")) continue;
+
+            Log.debug("[Plugins] Loading plugin @", file);
+            try {
+                LoadedMod mod = loadMod(file);
+                mods.add(mod);
+            } catch(Throwable e) {
+                if (e instanceof ClassNotFoundException && e.getMessage().contains("mindustry.plugin.Plugin")) {
                     Log.info("Plugin @ is outdated and needs to be ported to 6.0! Update its main class to inherit from 'mindustry.mod.Plugin'. See https://mindustrygame.github.io/wiki/modding/6-migrationv6/");
-                }else{
-                    Log.err("Failed to load mod file @. Skipping.", file);
+                } else {
+                    Log.err("Failed to load plugin file @. Skipping.", file);
                     Log.err(e);
                 }
             }

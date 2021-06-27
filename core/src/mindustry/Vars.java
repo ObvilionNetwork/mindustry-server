@@ -187,6 +187,8 @@ public class Vars implements Loadable{
     public static Fi saveDirectory;
     /** data subdirectory used for mods */
     public static Fi modDirectory;
+    /** data subdirectory used for plugins */
+    public static Fi pluginsDirectory;
     /** data subdirectory used for schematics */
     public static Fi schematicDirectory;
     /** data subdirectory used for bleeding edge build versions */
@@ -273,6 +275,7 @@ public class Vars implements Loadable{
         saveDirectory = dataDirectory.sibling("saves/");
         tmpDirectory = dataDirectory.child("tmp/");
         modDirectory = dataDirectory.sibling("mods/");
+        pluginsDirectory = dataDirectory.sibling("plugins/");
         schematicDirectory = dataDirectory.child("schematics/");
         bebuildDirectory = dataDirectory.child("be_builds/");
         emptyMap = new Map(new StringMap());
@@ -304,6 +307,7 @@ public class Vars implements Loadable{
         android = Core.app.isAndroid();
 
         modDirectory.mkdirs();
+        pluginsDirectory.mkdirs();
 
         mods.load();
         maps.load();
@@ -324,13 +328,13 @@ public class Vars implements Loadable{
     }
 
     /** Cleans up after a successful launch. */
-    public static void finishLaunch(){
+    public static void finishLaunch() {
         if(launchIDFile != null){
             launchIDFile.delete();
         }
     }
 
-    public static void loadLogger(){
+    public static void loadLogger() {
         if(loadedLogger) return;
 
         String[] tags = {"[green][D][]", "[royal][I][]", "[yellow][W][]", "[scarlet][E][]", ""};
@@ -362,7 +366,7 @@ public class Vars implements Loadable{
         loadedLogger = true;
     }
 
-    public static void loadFileLogger(){
+    public static void loadFileLogger() {
         if(loadedFileLogger) return;
 
         settings.setAppName(appName);

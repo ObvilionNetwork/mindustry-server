@@ -99,10 +99,15 @@ public class ServerControl implements ApplicationListener{
         logger = (level1, text) -> {
             String result = bold + lightBlack + "[" + dateTime.format(LocalDateTime.now()) + "] " + reset + format(tags[level1.ordinal()] + " " + text + "&fr");
 
-            lineReader.callWidget(LineReader.CLEAR);
-            lineReader.getTerminal().writer().println(result);
-            lineReader.callWidget(LineReader.REDRAW_LINE);
-            lineReader.callWidget(LineReader.REDISPLAY);
+            try {
+                lineReader.callWidget(LineReader.CLEAR);
+                lineReader.getTerminal().writer().println(result);
+                lineReader.callWidget(LineReader.REDRAW_LINE);
+                lineReader.callWidget(LineReader.REDISPLAY);
+            } catch (IllegalStateException e) {
+                // Widgets can only be called during a `readLine` call
+                lineReader.getTerminal().writer().println(result);
+            }
 
             if (Config.logging.bool()){
                 logToFile("[" + dateTime.format(LocalDateTime.now()) + "] " + formatColors(tags[level1.ordinal()] + " " + text + "&fr", false));
@@ -956,22 +961,30 @@ public class ServerControl implements ApplicationListener{
     private void readCommands() {
         try {
             while(true) {
-                String line = lineReader.readLine("> ");
-                Core.app.post(() -> handleCommandString(line));
-                wantsClose = false;
+                try {
+                    String line = lineReader.readLine("> ");
+                    Core.app.post(() -> handleCommandString(line));
+                    wantsClose = false;
+                } catch (EndOfFileException ignored) {
+                    if (wantsClose) {
+                        Log.info(blue + "Ctrl + D" + white + " pressed! Stopping server...");
+                        Core.app.exit();
+                    } else {
+                        wantsClose = true;
+                        Log.info(blue + "Ctrl + D" + white + " pressed! Press again to stop server");
+                        readCommands();
+                    }
+                }
             }
         } catch (UserInterruptException e) {
             if (wantsClose) {
-                System.out.println(blue + "Ctrl + C" + white + " pressed! Stopping server...");
+                Log.info(blue + "Ctrl + C" + white + " pressed! Stopping server...");
                 Core.app.exit();
             } else {
                 wantsClose = true;
-                logger.log(LogLevel.info, blue + "Ctrl + C" + white + " pressed! Press again to stop server");
+                Log.info(blue + "Ctrl + C" + white + " pressed! Press again to stop server");
                 readCommands();
             }
-        } catch (EndOfFileException e) {
-            logger.log(LogLevel.info,blue + "Ctrl + D" + white + " pressed! Stopping server...");
-            Core.app.exit();
         }
     }
 

@@ -133,7 +133,7 @@ public class ServerControl implements ApplicationListener{
 
         Core.app.post(() -> {
             //try to load auto-update save if possible
-            if(Config.autoUpdate.bool()){
+            if (Config.autoUpdate.bool()) {
                 Fi fi = saveDirectory.child("autosavebe." + saveExtension);
                 if(fi.exists()){
                     try{
@@ -928,14 +928,14 @@ public class ServerControl implements ApplicationListener{
         handler.register("search", "<name...>", "Search players who have used part of a name.", arg -> {
             ObjectSet<PlayerInfo> infos = netServer.admins.searchNames(arg[0]);
 
-            if(infos.size > 0){
+            if (infos.size > 0) {
                 info("Players found: @", infos.size);
 
                 int i = 0;
                 for(PlayerInfo info : infos){
                     info("- [@] '@' / @", i++, info.lastName, info.id);
                 }
-            }else{
+            } else {
                 info("Nobody with that name could be found.");
             }
         });

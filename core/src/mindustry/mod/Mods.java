@@ -377,18 +377,6 @@ public class Mods implements Loadable{
             }
         }
 
-        //load workshop mods now
-        for(Fi file : platform.getWorkshopContent(LoadedMod.class)){
-            try{
-                LoadedMod mod = loadMod(file);
-                mods.add(mod);
-                mod.addSteamID(file.name());
-            }catch(Throwable e){
-                Log.err("Failed to load mod workshop file @. Skipping.", file);
-                Log.err(e);
-            }
-        }
-
         resolveModState();
         sortMods();
 
@@ -403,7 +391,7 @@ public class Mods implements Loadable{
     private void resolveModState(){
         mods.each(this::updateDependencies);
 
-        for(LoadedMod mod : mods){
+        for (LoadedMod mod : mods) {
             mod.state =
                 !mod.isSupported() ? ModState.unsupported :
                 mod.hasUnmetDependencies() ? ModState.missingDependencies :

@@ -473,6 +473,10 @@ public class NetServer implements ApplicationListener{
                     return;
                 }
 
+                if(!player.dead() && player.unit().isCommanding()){
+                    player.unit().clearCommand();
+                }
+
                 player.getInfo().lastSyncTime = Time.millis();
                 Call.worldDataBegin(player.con);
                 netServer.sendWorldData(player);

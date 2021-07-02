@@ -328,6 +328,9 @@ project(":core"){
         if(localArc() && debugged()) api arcModule("extensions:recorder")
         if(localArc()) api arcModule(":extensions:packer")
 
+        implementation 'org.jline:jline-reader:3.19.0'
+        implementation 'org.jline:jline-terminal-jna:3.19.0'
+
         annotationProcessor 'com.github.Anuken:jabel:34e4c172e65b3928cd9eabe1993654ea79c409cd'
         compileOnly project(":annotations")
         kapt project(":annotations")
@@ -364,6 +367,7 @@ project(":server"){
     dependencies{
         implementation project(":core")
         implementation arcModule("backends:backend-headless")
+
         implementation 'org.jline:jline-reader:3.19.0'
         implementation 'org.jline:jline-terminal-jna:3.19.0'
     }

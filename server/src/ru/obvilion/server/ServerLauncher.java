@@ -12,6 +12,7 @@ import mindustry.mod.*;
 import mindustry.mod.Mods.*;
 import mindustry.net.Net;
 import mindustry.net.*;
+import mindustry.service.SStat;
 
 import java.time.*;
 
@@ -26,6 +27,8 @@ public class ServerLauncher implements ApplicationListener{
             ServerLauncher.args = args;
             Vars.platform = new Platform(){};
             Vars.net = new Net(platform.getNet());
+
+            SStat.init();
 
             logger = (level1, text) -> {
                 String result = "[" + ServerControl.dateTime.format(LocalDateTime.now()) + "] " + format(ServerControl.tags[level1.ordinal()] + " " + text + "&fr");

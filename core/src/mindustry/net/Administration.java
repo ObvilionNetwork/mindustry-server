@@ -24,7 +24,7 @@ public class Administration{
     public ObjectMap<String, Long> kickedIPs = new ObjectMap<>();
 
     /** All player info. Maps UUIDs to info. This persists throughout restarts. Do not access directly. */
-    private ObjectMap<String, PlayerInfo> playerInfo = new ObjectMap<>();
+    public ObjectMap<String, PlayerInfo> playerInfo = new ObjectMap<>();
 
     public Administration(){
         load();

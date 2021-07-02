@@ -831,9 +831,9 @@ public class ServerControl implements ApplicationListener{
                 info("No players are currently in the server.");
             }else{
                 info("Players: @", Groups.player.size());
+                Groups.player.sort((a,b)->{if(a.name().toCharArray()[0]<b.name().toCharArray()[0]){return 1;}else{return -1;}});
                 for(Player user : Groups.player){
-                    PlayerInfo userInfo = user.getInfo();
-                    info(" &lm @ /  ID: @ / IP: @ / Admin: @", userInfo.lastName, userInfo.id, userInfo.lastIP, userInfo.admin);
+                    info(" &lm @ /  ID: @ / IP: @ / Admin: @ / Team: @", user.name(), user.uuid(), user.con.address, user.admin(), user.team().name);
                 }
             }
         });

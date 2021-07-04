@@ -1,2 +1,5 @@
+dependencies {
+    implementation 'org.jetbrains:annotations:20.1.0'
+}
 sourceSets.main.java.srcDirs = ["src/", "$buildDir/generated/sources/annotationProcessor/java/main"]
 sourceSets.main.kotlin.srcDirs = ["src/"]

@@ -28,13 +28,13 @@ public class ConsoleCommandHandler extends CommandHandler {
         return super.register(text, params, description, runner);
     }
 
-    public Command register(String text, String description, Seq<Seq<Completer>> completers, Cons<String[]> runner) {
-        updateCompleters(text, completers);
+    public Command register(String text, String description, InputCompleter completer, Cons<String[]> runner) {
+        updateCompleters(text, completer.getCompleters());
         return register(text, description, (args, p) -> runner.get(args));
     }
 
-    public Command register(String text, String params, String description, Seq<Seq<Completer>> completers, Cons<String[]> runner) {
-        updateCompleters(text, completers);
+    public Command register(String text, String params, String description, InputCompleter completer, Cons<String[]> runner) {
+        updateCompleters(text, completer.getCompleters());
         return register(text, params, description, (args, p) -> runner.get(args));
     }
 

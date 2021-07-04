@@ -15,6 +15,7 @@ import mindustry.core.*;
 import mindustry.game.EventType.*;
 import mindustry.game.*;
 import mindustry.gen.*;
+import mindustry.impl.completer.*;
 import mindustry.io.*;
 import mindustry.maps.Map;
 import mindustry.maps.*;
@@ -24,10 +25,10 @@ import mindustry.net.Administration.*;
 import mindustry.net.Packets.*;
 import mindustry.net.*;
 import mindustry.type.*;
+import mindustry.utils.InputCompleter;
 import org.jline.reader.*;
 import org.jline.reader.impl.LineReaderImpl;
 import org.jline.reader.impl.completer.AggregateCompleter;
-import org.jline.reader.impl.completer.ArgumentCompleter;
 import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
@@ -311,7 +312,6 @@ public class ServerControl implements ApplicationListener{
             Core.app.exit();
         });
 
-
         handler.register("stop", "Stop hosting the server.", arg -> {
             net.closeServer();
             if (lastTask != null) lastTask.cancel();
@@ -319,26 +319,11 @@ public class ServerControl implements ApplicationListener{
             info("Stopped server.");
         });
 
-
-        Seq<String> maps = new Seq<>();
-        for (Map map : Vars.maps.all()) {
-            maps.add(map.name().replaceAll(" ", "_"));
-        }
-
-        Seq<String> gms = new Seq<>();
-        for (Gamemode gm : Gamemode.values()) {
-            gms.add(gm.name());
-        }
-
-        Seq<Completer> a = new Seq<>();
-        a.addAll(
-                new StringsCompleter(maps),
-                new StringsCompleter(gms)
-        );
-
-        Seq<Seq<Completer>> compl = new Seq<>();
-        compl.add(a);
-        handler.register("host", "[mapname] [mode]", "Open the server. Will default to survival and a random map if not specified.", compl, arg -> {
+        handler.register("host",
+            "[mapname] [mode]",
+            "Open the server. Will default to survival and a random map if not specified.",
+            InputCompleter.from(result -> result.addAll(new MapsCompleter(), new GamemodeCompleter())),
+        arg -> {
             if (state.is(State.playing)) {
                 err("Already hosting. Type 'stop' to stop hosting first.");
                 return;
@@ -452,19 +437,11 @@ public class ServerControl implements ApplicationListener{
             info("Mod directory: &fi@", modDirectory.file().getAbsoluteFile().toString());
         });
 
-        {
-            gms = new Seq<>();
-            for (LoadedMod m : mods.list()) {
-                gms.add(m.name);
-            }
-
-            a = new Seq<>();
-            a.add(new StringsCompleter(gms));
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("mod", "<name...>", "Display information about a loaded plugin.", compl, arg -> {
+        handler.register("mod",
+            "<name...>",
+            "Display information about a loaded plugin.",
+            InputCompleter.from(result -> result.addAll(new ModsCompleter())),
+        arg -> {
             LoadedMod mod = mods.list().find(p -> p.meta.name.equalsIgnoreCase(arg[0]));
             if (mod != null) {
                 info("Name: @", mod.meta.displayName());
@@ -493,35 +470,24 @@ public class ServerControl implements ApplicationListener{
             info("&fi&lcServer: &fr@", "&lw" + arg[0]);
         });
 
-        {
-            a = new Seq<>();
-            a.add(new StringsCompleter("on", "off"));
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("pause", "<on/off>", "Pause or unpause the game.", compl, arg -> {
+        handler.register("pause",
+            "<on/off>",
+            "Pause or unpause the game.",
+            InputCompleter.from(result -> result.addAll(new StringsCompleter("on", "off"))),
+        arg -> {
             boolean pause = arg[0].equals("on");
             state.serverPaused = pause;
             info(pause ? "Game paused." : "Game unpaused.");
         });
 
-        {
-            gms = new Seq<>();
-            for (Field f : state.rules.getClass().getFields()) {
-                gms.add(f.getName());
-            }
-
-            a = new Seq<>();
-            a.addAll(
-                    new StringsCompleter("remove", "add"),
-                    new StringsCompleter(gms)
-            );
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("rules", "[remove/add] [name] [value...]", "List, remove or add global rules. These will apply regardless of map.", compl, arg -> {
+        handler.register("rules",
+            "[remove/add] [name] [value...]",
+            "List, remove or add global rules. These will apply regardless of map.",
+            InputCompleter.from(result -> result.addAll(
+                new StringsCompleter("remove", "add"),
+                new RulesCompleter()
+            )),
+        arg -> {
             String rules = Core.settings.getString("globalrules");
             JsonValue base = JsonIO.json.fromJson(null, rules);
 
@@ -573,21 +539,11 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            gms = new Seq<>();
-            for (Team t : Team.baseTeams) {
-                gms.add(t.name);
-            }
-
-            a = new Seq<>();
-            a.addAll(
-                new StringsCompleter(gms)
-            );
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("fillitems", "[team]", "Fill the core with items.", compl, arg -> {
+        handler.register("fillitems",
+            "[team]",
+            "Fill the core with items.",
+            InputCompleter.from(result -> result.addAll(new TeamsCompleter(Seq.with(Team.baseTeams)))),
+        arg -> {
             if(!state.is(State.playing)){
                 err("Not playing. Host first.");
                 return;
@@ -612,16 +568,11 @@ public class ServerControl implements ApplicationListener{
             info("Core filled.");
         });
 
-        {
-            a = new Seq<>();
-            a.addAll(
-                new StringsCompleter("off", "<number>")
-            );
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("playerlimit", "[off/somenumber]", "Set the server player limit.", compl, arg -> {
+        handler.register("playerlimit",
+            "[off/number]",
+            "Set the server player limit.",
+            InputCompleter.from(result -> result.addAll(new StringsCompleter("off", "<number>"))),
+        arg -> {
             if(arg.length == 0){
                 info("Player limit is currently @.", netServer.admins.getPlayerLimit() == 0 ? "off" : netServer.admins.getPlayerLimit());
                 return;
@@ -641,22 +592,12 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            gms = new Seq<>();
-            for (Config c : Config.all) {
-                gms.add(c.key);
-            }
 
-            a = new Seq<>();
-            a.addAll(
-                new StringsCompleter(gms),
-                new StringsCompleter("<value>")
-            );
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("config", "[name] [value...]", "Configure server settings.", compl, arg -> {
+        handler.register("config",
+            "[name] [value...]",
+            "Configure server settings.",
+            InputCompleter.from(result -> result.addAll(new ConfigCompleter())),
+        arg -> {
             if(arg.length == 0){
                 info("All config values:");
                 for(Config c : Config.all){
@@ -693,17 +634,11 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            a = new Seq<>();
-            a.addAll(
-                    new StringsCompleter("add", "remove"),
-                    new StringsCompleter("<ip>")
-            );
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("subnet-ban", "[add/remove] [address]", "Ban a subnet. This simply rejects all connections with IPs starting with some string.", compl, arg -> {
+        handler.register("subnet-ban",
+            "[add/remove] [address]",
+            "Ban a subnet. This simply rejects all connections with IPs starting with some string.",
+            InputCompleter.from(result -> result.addAll(new StringsCompleter("add", "remove"), new StringsCompleter("<ip>"))),
+        arg -> {
             if(arg.length == 0){
                 info("Subnets banned: @", netServer.admins.getSubnetBans().isEmpty() ? "<none>" : "");
                 for(String subnet : netServer.admins.getSubnetBans()){
@@ -734,17 +669,11 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            a = new Seq<>();
-            a.addAll(
-                    new StringsCompleter("add", "remove"),
-                    new StringsCompleter("<id>")
-            );
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("whitelist", "[add/remove] [ID]", "Add/remove players from the whitelist using their ID.", compl, arg -> {
+        handler.register("whitelist",
+            "[add/remove] [ID]",
+            "Add/remove players from the whitelist using their ID.",
+            InputCompleter.from(result -> result.addAll(new StringsCompleter("add", "remove"), new PlayersIDCompleter())),
+        arg -> {
             if(arg.length == 0){
                 Seq<PlayerInfo> whitelist = netServer.admins.getWhitelisted();
 
@@ -778,16 +707,11 @@ public class ServerControl implements ApplicationListener{
         });
 
         //TODO should be a config, not a separate command.
-        {
-            a = new Seq<>();
-            a.addAll(
-                    new StringsCompleter("none", "all", "custom", "builtin")
-            );
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("shuffle", "[none/all/custom/builtin]", "Set map shuffling mode.", compl, arg -> {
+        handler.register("shuffle",
+            "[none/all/custom/builtin]",
+            "Set map shuffling mode.",
+            InputCompleter.from(result -> result.addAll(new StringsCompleter("none", "all", "custom", "builtin"))),
+        arg -> {
             if(arg.length == 0){
                 info("Shuffle mode current set to '@'.", Vars.maps.getShuffleMode());
             }else{
@@ -802,16 +726,11 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            a = new Seq<>();
-            a.addAll(
-                new StringsCompleter(maps)
-            );
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("nextmap", "<mapname...>", "Set the next map to be played after a game-over. Overrides shuffling.", compl, arg -> {
+        handler.register("nextmap",
+            "<mapname...>",
+            "Set the next map to be played after a game-over. Overrides shuffling.",
+            InputCompleter.from(result -> result.addAll(new MapsCompleter())),
+        arg -> {
             Map res = Vars.maps.all().find(map -> map.name().equalsIgnoreCase(arg[0].trim().replace('_', ' ')) || map.name().equalsIgnoreCase(arg[0].trim()));
             if(res != null){
                 nextMapOverride = res;
@@ -821,19 +740,11 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            gms = new Seq<>();
-            for (Player p : Groups.player) {
-                gms.add(p.name);
-            }
-
-            a = new Seq<>();
-            a.add(new StringsCompleter(gms));
-
-            compl = new Seq<>();
-            compl.add(a);
-        }
-        handler.register("kick", "<username...>", "Kick a person by name.", compl, arg -> {
+        handler.register("kick",
+            "<username...>",
+            "Kick a person by name.",
+            InputCompleter.from(result -> result.addAll(new PlayersCompleter())),
+        arg -> {
             if(!state.is(State.playing)){
                 err("Not hosting a game yet. Calm down.");
                 return;
@@ -850,34 +761,15 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            compl = new Seq<>();
-
-            /* On name */
-            gms = new Seq<>();
-            for (Player p : Groups.player) gms.add(p.name);
-
-            a = new Seq<>();
-            a.addAll(new StringsCompleter("name"), new StringsCompleter(gms));
-            compl.add(a);
-
-            /* On ip */
-            gms = new Seq<>();
-            for (PlayerInfo info : netServer.admins.playerInfo.values()) gms.addAll(info.ips);
-
-            a = new Seq<>();
-            a.addAll(new StringsCompleter("ip"), new StringsCompleter(gms));
-            compl.add(a);
-
-            /* On id */
-            gms = new Seq<>();
-            for (PlayerInfo info : netServer.admins.playerInfo.values()) gms.add(info.id);
-
-            a = new Seq<>();
-            a.addAll(new StringsCompleter("id"), new StringsCompleter(gms));
-            compl.add(a);
-        }
-        handler.register("ban", "<id/name/ip> <username/IP/ID...>", "Ban a person.", compl, arg -> {
+        handler.register("ban",
+            "<id/name/ip> <username/IP/ID...>",
+            "Ban a person.",
+            InputCompleter.fromAll(result -> result.addAll(
+                    new Seq<Completer>().addAll(new StringsCompleter("id"), new PlayersIDCompleter()),
+                    new Seq<Completer>().addAll(new StringsCompleter("ip"), new PlayersIPCompleter()),
+                    new Seq<Completer>().addAll(new StringsCompleter("name"), new PlayersCompleter())
+            )),
+        arg -> {
             if(arg[0].equals("id")){
                 netServer.admins.banPlayerID(arg[1]);
                 info("Banned.");
@@ -933,26 +825,14 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            compl = new Seq<>();
-
-            /* On id */
-            gms = new Seq<>();
-            for (PlayerInfo info : netServer.admins.playerInfo.values()) gms.add(info.id);
-
-            a = new Seq<>();
-            a.addAll(new StringsCompleter("id"), new StringsCompleter(gms));
-            compl.add(a);
-
-            /* On ip */
-            gms = new Seq<>();
-            gms.addAll(netServer.admins.bannedIPs);
-
-            a = new Seq<>();
-            a.addAll(new StringsCompleter("ip"), new StringsCompleter(gms));
-            compl.add(a);
-        }
-        handler.register("unban", "<ip/ID>", "Completely unban a person by IP or ID.", compl, arg -> {
+        // TODO: add bannedIDs
+        handler.register("unban",
+            "<ip/ID>",
+            "Completely unban a person by IP or ID.",
+            InputCompleter.from(res -> res.addAll(new AggregateCompleter(
+                    new StringsCompleter(netServer.admins.bannedIPs), new PlayersIDCompleter()
+            ))),
+        arg -> {
             if(netServer.admins.unbanPlayerIP(arg[0]) || netServer.admins.unbanPlayerID(arg[0])){
                 info("Unbanned player: @", arg[0]);
             }else{
@@ -960,18 +840,12 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            compl = new Seq<>();
-
-            /* On id */
-            gms = new Seq<>();
-            for (PlayerInfo info : netServer.admins.playerInfo.values()) gms.add(info.id);
-
-            a = new Seq<>();
-            a.addAll(new StringsCompleter("id"), new StringsCompleter(gms));
-            compl.add(a);
-        }
-        handler.register("pardon", "<ID>", "Pardons a votekicked player by ID and allows them to join again.", compl, arg -> {
+        // TODO: add kickedIDs
+        handler.register("pardon",
+            "<ID>",
+            "Pardons a votekicked player by ID and allows them to join again.",
+            InputCompleter.from(res -> res.addAll(new PlayersIDCompleter())),
+        arg -> {
             PlayerInfo info = netServer.admins.getInfoOptional(arg[0]);
 
             if(info != null){
@@ -982,18 +856,14 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            compl = new Seq<>();
-
-            /* On id */
-            gms = new Seq<>();
-            for (PlayerInfo info : netServer.admins.playerInfo.values()) gms.add(info.id);
-
-            a = new Seq<>();
-            a.addAll(new StringsCompleter("add", "remove"), new StringsCompleter(gms));
-            compl.add(a);
-        }
-        handler.register("admin", "<add/remove> <username/ID...>", "Make an online user admin", compl, arg -> {
+        handler.register("admin",
+            "<add/remove> <username/ID...>",
+            "Make an online user admin",
+            InputCompleter.from(res -> res.addAll(
+                    new StringsCompleter("add", "remove"),
+                    new AggregateCompleter(new PlayersIDCompleter(), new PlayersCompleter())
+            )),
+        arg -> {
             if(!state.is(State.playing)){
                 err("Open the server first.");
                 return;
@@ -1062,14 +932,11 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            compl = new Seq<>();
-
-            a = new Seq<>();
-            a.add(new StringsCompleter("<slot>"));
-            compl.add(a);
-        }
-        handler.register("load", "<slot>", "Load a save from a slot.", compl, arg -> {
+        handler.register("load",
+            "<slot>",
+            "Load a save from a slot.",
+            InputCompleter.from(res -> res.addAll(new FilesCompleter(saveDirectory, true))),
+        arg -> {
             if(state.is(State.playing)){
                 err("Already hosting. Type 'stop' to stop hosting first.");
                 return;
@@ -1095,15 +962,12 @@ public class ServerControl implements ApplicationListener{
             });
         });
 
-        {
-            compl = new Seq<>();
-
-            a = new Seq<>();
-            a.add(new StringsCompleter("<slot>"));
-            compl.add(a);
-        }
-        handler.register("save", "<slot>", "Save game state to a slot.", compl, arg -> {
-            if(!state.is(State.playing)){
+        handler.register("save",
+            "<slot>",
+            "Save game state to a slot.",
+            InputCompleter.from(res -> res.addAll(new StringsCompleter("<slot>"))),
+        arg -> {
+            if (!state.is(State.playing)) {
                 err("Not hosting. Host a game first.");
                 return;
             }
@@ -1136,18 +1000,15 @@ public class ServerControl implements ApplicationListener{
             Events.fire(new GameOverEvent(Team.crux));
         });
 
-        {
-            compl = new Seq<>();
-
-            gms = new Seq<>();
-            for (PlayerInfo info : netServer.admins.playerInfo.values()) gms.add(info.id);
-            for (Player p : Groups.player) gms.add(p.name);
-
-            a = new Seq<>();
-            a.addAll(new StringsCompleter(gms));
-            compl.add(a);
-        }
-        handler.register("info", "<IP/UUID/name...>", "Find player info(s). Can optionally check for all names or IPs a player has had.", compl, arg -> {
+        handler.register("info",
+            "<IP/UUID/name...>",
+            "Find player info(s). Can optionally check for all names or IPs a player has had.",
+            InputCompleter.from(res -> res.addAll(new AggregateCompleter(
+                    new PlayersCompleter(),
+                    new PlayersIDCompleter(),
+                    new PlayersIPCompleter()
+            ))),
+        arg -> {
             ObjectSet<PlayerInfo> infos = netServer.admins.findByName(arg[0]);
 
             if(infos.size > 0){
@@ -1167,17 +1028,11 @@ public class ServerControl implements ApplicationListener{
             }
         });
 
-        {
-            compl = new Seq<>();
-
-            gms = new Seq<>();
-            for (Player p : Groups.player) gms.add(p.name);
-
-            a = new Seq<>();
-            a.addAll(new StringsCompleter(gms));
-            compl.add(a);
-        }
-        handler.register("search", "<name...>", "Search players who have used part of a name.", compl, arg -> {
+        handler.register("search",
+            "<name...>",
+            "Search players who have used part of a name.",
+            InputCompleter.from(res -> res.addAll(new PlayersCompleter())),
+        arg -> {
             ObjectSet<PlayerInfo> infos = netServer.admins.searchNames(arg[0]);
 
             if (infos.size > 0) {
@@ -1202,7 +1057,7 @@ public class ServerControl implements ApplicationListener{
         handler.register("yes", "Run the last suggested incorrect command.", arg -> {
             if(suggested == null){
                 err("There is nothing to say yes to.");
-            }else{
+            } else {
                 handleCommandString(suggested);
             }
         });

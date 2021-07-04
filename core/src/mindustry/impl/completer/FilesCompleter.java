@@ -16,11 +16,11 @@ public class FilesCompleter implements Completer {
     public FilesCompleter(Fi dir, boolean ignoreExtension) {
         Seq<String> gms_str = new Seq<>();
         if (ignoreExtension) {
-            for (Fi f : dir.findAll()) {
+            for (Fi f : dir.list()) {
                 gms_str.add(f.nameWithoutExtension());
             }
         } else {
-            for (Fi f : dir.findAll()) {
+            for (Fi f : dir.list()) {
                 gms_str.add(f.name());
             }
         }
